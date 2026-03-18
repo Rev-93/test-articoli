@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const gistId = process.env.GIST_ID || '';
-const gistToken = process.env.GIST_TOKEN || '';
+const gistId = (process.env.GIST_ID || '').trim();
+const gistToken = (process.env.GIST_TOKEN || '').trim();
 
 const appJsPath = path.join(__dirname, 'public', 'static', 'js', 'app.js');
 
@@ -14,3 +14,5 @@ content = content.replace(/token: '.*?'/g, `token: '${gistToken}'`);
 fs.writeFileSync(appJsPath, content);
 
 console.log('Build completed!');
+console.log('GIST_ID:', gistId);
+console.log('GIST_TOKEN set:', !!gistToken);

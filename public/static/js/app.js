@@ -78,10 +78,18 @@ async function emptyDatabase() {
 }
 
 async function loadFromGist() {
+    const gistId = (GIST_CONFIG.gistId || '').trim();
+    const token = (GIST_CONFIG.token || '').trim();
+    
+    if (!gistId || !token) {
+        console.log('Gist not configured');
+        return [];
+    }
+    
     try {
-        const response = await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
+        const response = await fetch(`https://api.github.com/gists/${gistId}`, {
             headers: {
-                'Authorization': `token ${GIST_CONFIG.token}`,
+                'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
             }
         });
@@ -89,6 +97,8 @@ async function loadFromGist() {
             const data = await response.json();
             const content = data.files['data.json'].content;
             return JSON.parse(content);
+        } else {
+            console.error('Gist API error:', response.status);
         }
     } catch (e) {
         console.error('Gist load error:', e);
@@ -97,11 +107,16 @@ async function loadFromGist() {
 }
 
 async function saveGist(tests) {
+    const gistId = (GIST_CONFIG.gistId || '').trim();
+    const token = (GIST_CONFIG.token || '').trim();
+    
+    if (!gistId || !token) return;
+    
     try {
-        await fetch(`https://api.github.com/gists/${GIST_CONFIG.gistId}`, {
+        await fetch(`https://api.github.com/gists/${gistId}`, {
             method: 'PATCH',
             headers: {
-                'Authorization': `token ${GIST_CONFIG.token}`,
+                'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             },
