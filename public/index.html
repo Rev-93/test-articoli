@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Classificazione Articoli</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        .hidden { display: none !important; }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-soft);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="theme-fab" id="themeToggle" title="Cambia tema">
+        <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </div>
+
+    <div id="startView" class="container">
+        <div class="card card-start">
+            <h1>Test classificazione articoli</h1>
+            <p class="subtitle">Seleziona un'opzione per continuare</p>
+            
+            <div class="start-options">
+                <button id="newTestBtn" class="btn-start btn-primary-large">
+                    <svg class="btn-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    Inizia nuovo test
+                </button>
+                
+                <button id="databaseBtn" class="btn-start btn-secondary-large">
+                    <svg class="btn-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                    Consulta database prove
+                </button>
+            </div>
+        </div>
+        
+        <div id="operatorSection" class="card hidden">
+            <h1>Inserisci nome operatore</h1>
+            <div class="form-group">
+                <label for="operatorName">Nome operatore</label>
+                <input type="text" id="operatorName" class="input-field" placeholder="Inserisci il tuo nome" autocomplete="off">
+            </div>
+            <button id="startBtn" class="btn-primary">Inizia</button>
+            <button id="backBtn" class="btn-back">Indietro</button>
+            <p id="errorMsg" class="error-message"></p>
+        </div>
+    </div>
+
+    <div id="testView" class="test-container hidden">
+        <div class="header">
+            <div class="header-left">
+                <h2>Classificazione PDF</h2>
+                <span id="progressIndicator" class="progress-indicator">(1/1)</span>
+            </div>
+            <div class="header-actions">
+                <div class="header-nav">
+                    <button id="prevBtn" class="btn-nav-outline" title="Precedente">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button id="nextBtn" class="btn-nav-outline" title="Successivo">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                </div>
+                
+                <div class="pdf-controls">
+                    <button id="zoomOutBtn" class="btn-zoom">-</button>
+                    <span id="zoomLevel">100%</span>
+                    <button id="zoomInBtn" class="btn-zoom">+</button>
+                </div>
+                
+                <button id="cancelTestBtn" class="btn-cancel-top">Annulla</button>
+                <button id="confirmTestBtn" class="btn-confirm-top">Conferma test</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="pdf-section">
+                <div id="pdfViewer" class="pdf-viewer">
+                    <img id="pdfImage" style="display:none;">
+                </div>
+            </div>
+            
+            <div class="category-section">
+                <div class="category-header">
+                    <h3>Seleziona categoria</h3>
+                    <button id="helpBtn" class="btn-help" title="Guida categorie">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                    </button>
+                </div>
+                
+                <div class="category-buttons">
+                    <button class="category-btn" data-category="Tondo liscio" data-desc-tondo-liscio="Articoli di forma ottenibile di rivoluzione (eccezione fatta per la tacca di centraggio al corpo / fondo), senza alcuna incisione al corpo (eccezione fatta per PLC e scritte di legge).">Tondo liscio</button>
+                    <button class="category-btn" data-category="Tondo lavorato" data-desc-tondo-lavorato="Articoli la cui forma sarebbe ottenibile di rivoluzione, ma con la presenza di lavorazioni al corpo che non rendono la superficie liscia.">Tondo lavorato</button>
+                    <button class="category-btn" data-category="Sagomato liscio" data-desc-sagomato-liscio="Articoli di forma non ottenibile di rivoluzione, senza alcuna incisione al corpo (eccezione fatta per le scritte di legge).">Sagomato liscio</button>
+                    <button class="category-btn" data-category="Sagomato lavorato" data-desc-sagomato-lavorato="Articoli di forma non ottenibile di rivoluzione, con la presenza di lavorazioni al corpo che non rendono la superficie liscia.">Sagomato lavorato</button>
+                    <button class="category-btn" data-category="Speciale" data-desc-speciale="Articoli con lavorazioni complesse e tutto ciò che non è contemplato nelle prime quattro categorie (assi apertura stampo sagomati, colli disassati ecc.).">Speciale</button>
+                </div>
+                
+                <div class="category-desc" id="categoryDesc"></div>
+            </div>
+        </div>
+        
+        <div id="helpModal" class="modal">
+            <div class="modal-content modal-large">
+                <h2>Guida categorie</h2>
+                <div class="legend-content">
+                    <div class="legend-item">
+                        <span class="legend-number">1</span>
+                        <div class="legend-text">
+                            <strong>Tondo liscio</strong>
+                            <p>Articoli di forma ottenibile di rivoluzione (eccezione fatta per la tacca di centraggio al corpo / fondo), senza alcuna incisione al corpo (eccezione fatta per PLC e scritte di legge).</p>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-number">2</span>
+                        <div class="legend-text">
+                            <strong>Tondo lavorato</strong>
+                            <p>Articoli la cui forma sarebbe ottenibile di rivoluzione, ma con la presenza di lavorazioni al corpo che non rendono la superficie liscia.</p>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-number">3</span>
+                        <div class="legend-text">
+                            <strong>Sagomato liscio</strong>
+                            <p>Articoli di forma non ottenibile di rivoluzione, senza alcuna incisione al corpo (eccezione fatta per le scritte di legge).</p>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-number">4</span>
+                        <div class="legend-text">
+                            <strong>Sagomato lavorato</strong>
+                            <p>Articoli di forma non ottenibile di rivoluzione, con la presenza di lavorazioni al corpo che non rendono la superficie liscia.</p>
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-number">5</span>
+                        <div class="legend-text">
+                            <strong>Speciale</strong>
+                            <p>Articoli con lavorazioni complesse e tutto ciò che non è contemplato nelle prime quattro categorie (assi apertura stampo sagomati, colli disassati ecc.).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="helpModalClose" class="btn-modal-confirm">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="summaryView" class="summary-container hidden">
+        <div class="summary-header">
+            <h1>Riepilogo test classificazione</h1>
+            <p class="operator-name" id="summaryOperator"></p>
+        </div>
+        
+        <div class="table-container">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Numero Serie</th>
+                        <th>Categoria assegnata</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryTableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="export-buttons">
+            <button id="exportExcelBtn" class="btn-export btn-excel">
+                <span class="icon">📊</span>
+                Export Excel
+            </button>
+            <button id="exportPdfBtn" class="btn-export btn-pdf">
+                <span class="icon">📄</span>
+                Export PDF
+            </button>
+            <button id="restartBtn" class="btn-export btn-restart">
+                <span class="icon">🔄</span>
+                Nuovo test
+            </button>
+        </div>
+    </div>
+
+    <div id="databaseView" class="database-container hidden">
+        <div class="db-header">
+            <h1>Database prove completate</h1>
+            <button id="backToStartBtn" class="btn-back-inline">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Torna indietro
+            </button>
+        </div>
+        
+        <div class="db-actions">
+            <form class="search-form" id="searchForm">
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input type="text" id="searchInput" placeholder="Cerca per nome operatore...">
+                    <a href="#" id="searchClear" class="search-clear hidden">&times;</a>
+                </div>
+            </form>
+            <button id="emptyDbBtn" class="btn-empty">Svuota database</button>
+        </div>
+        
+        <div id="databaseTableContainer">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Operatore</th>
+                        <th>Data</th>
+                        <th>PDF totali</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody id="databaseTableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="emptyState" class="empty-state hidden">
+            <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            <p>Nessun test trovato</p>
+        </div>
+    </div>
+
+    <div id="testDetailsView" class="database-container hidden">
+        <div class="db-header">
+            <h1>Dettagli prova</h1>
+            <button id="backToDbBtn" class="btn-back-inline">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Torna al database
+            </button>
+        </div>
+        
+        <div class="test-info">
+            <div class="info-card">
+                <span class="info-label">Operatore</span>
+                <span class="info-value" id="detailOperator">-</span>
+            </div>
+            <div class="info-card">
+                <span class="info-label">Data</span>
+                <span class="info-value" id="detailDate">-</span>
+            </div>
+            <div class="info-card">
+                <span class="info-label">PDF totali</span>
+                <span class="info-value" id="detailTotal">-</span>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Numero Serie</th>
+                        <th>Categoria assegnata</th>
+                    </tr>
+                </thead>
+                <tbody id="detailTableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="export-buttons">
+            <button id="detailExportExcel" class="btn-export btn-excel">
+                <span class="icon">📊</span>
+                Export Excel
+            </button>
+            <button id="detailExportPdf" class="btn-export btn-pdf">
+                <span class="icon">📄</span>
+                Export PDF
+            </button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h2>Conferma test</h2>
+            <p>Sei sicuro di voler confermare il test? Non potrai più modificarlo.</p>
+            <div class="modal-actions">
+                <button id="confirmCancel" class="btn-modal-cancel">Annulla</button>
+                <button id="confirmOk" class="btn-modal-confirm">Conferma</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="emptyModal" class="modal">
+        <div class="modal-content">
+            <h2>Svuota database</h2>
+            <p>Sei sicuro di voler eliminare tutti i test salvati? Questa azione non può essere annullata.</p>
+            <div class="modal-actions">
+                <button id="emptyCancel" class="btn-modal-cancel">Annulla</button>
+                <button id="emptyOk" class="btn-modal-confirm btn-close-red">Elimina tutto</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="images/images.js"></script>
+    <script src="static/js/app.js"></script>
+</body>
+</html>
